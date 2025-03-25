@@ -1,0 +1,105 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-02-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("tidyverse")
+library("tidyverse")
+```
+
+```{r Visualizing}
+install.packages("palmerpenguins")
+library("palmerpenguins")
+
+penguins %>% str()
+
+?penguins
+
+ggplot(penguins, aes(bill_length_mm, bill_depth_mm)) + geom_point()
+
+ggplot(penguins, aes(species, bill_depth_mm)) + geom_point()
+
+ggplot(penguins, aes(bill_length_mm, bill_depth_mm), na.rm = T) + geom_point() +
+  labs(caption = "Data come from the palmerpenguins package.")
+
+ggplot(penguins, aes(flipper_length_mm, body_mass_g, color = bill_depth_mm)) + 
+  geom_point() + 
+  geom_smooth()
+
+ggplot(
+  data = penguins,
+  mapping = aes(x = flipper_length_mm, y = body_mass_g, color = island)
+) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+
+ggplot(
+  data = penguins,
+  mapping = aes(x = flipper_length_mm, y = body_mass_g)
+) +
+  geom_point() +
+  geom_smooth()
+
+ggplot() +
+  geom_point(
+    data = penguins,
+    mapping = aes(x = flipper_length_mm, y = body_mass_g)
+  ) +
+  geom_smooth(
+    data = penguins,
+    mapping = aes(x = flipper_length_mm, y = body_mass_g)
+  )
+```
+
+```{r Visualizing Distributions}
+penguins %>% ggplot(aes(y = species)) +
+  geom_bar()
+
+ggplot(penguins, aes(x = species)) +
+  geom_bar(color = "red")
+
+ggplot(penguins, aes(x = species)) +
+  geom_bar(fill = "red")
+
+diamonds %>% ggplot(aes(x = carat)) +
+  geom_histogram(binwidth = 0.05)
+```
+
+```{r Three or More Variables}
+mpg %>% str
+
+mpg %>% ggplot(aes(displ, hwy)) +
+  geom_point()
+
+mpg %>% ggplot(aes(displ, hwy, color = fl, size = fl, shape = fl)) +
+  geom_point()
+
+mpg %>% ggplot(aes(displ, hwy)) +
+  geom_point()
+
+ggplot(
+  data = penguins,
+  mapping = aes(
+    x = bill_length_mm, y = bill_depth_mm, 
+    color = species, shape = species
+  )
+) +
+  geom_point() +
+  labs(color = "Species") + 
+  facet_wrap(~species)
+```
+
+```{r Data Transformation}
+flights %>% filter(arr_delay >= 120 &
+                     dest %in% c("IAH", "HOU") &
+                     carrier %in% c("UA", "AA", "DL") &
+                     month %in% c(7, 8, 9))
+
+flights %>% arrange(dep_time)
+```
+
+

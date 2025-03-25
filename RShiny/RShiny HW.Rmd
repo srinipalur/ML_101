@@ -1,0 +1,296 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-03-02"
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r include = F}
+library("shiny")
+library("vroom")
+library("tidyverse")
+```
+
+
+```{r First Shiny App, eval = F}
+ui <- fluidPage(
+  selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
+  verbatimTextOutput("summary"),
+  tableOutput("table")
+)
+
+server <- function(input, output, session) {
+  # Creating a reactive expression
+  dataset <- reactive({
+    get(input$dataset)
+  })
+  
+  output$summary <- renderPrint({
+    summary(dataset())
+  })
+  
+  output$table <- renderTable({
+    dataset()
+  })
+}
+
+shinyApp(ui, server)
+```
+
+```{r Exercises1a, eval = F}
+ui <- fluidPage(
+  textInput("text", "Text input", placeholder = "Enter text..."), 
+  textOutput("Name")
+)
+
+server <- function(input, output) {
+  nameEntered <- reactive(input$text)
+  output$Name <- renderText({paste0("Hello, ", nameEntered())})
+}
+
+shinyApp(ui, server)
+```
+
+```{r Exercises1b, eval = F}
+ui <- fluidPage(
+  sliderInput("x", "If x is", min = 1, max = 50, value = 30),
+  sliderInput("y", "And y is", min = 1, max = 50, value = 30),
+  "X times y is",
+  textOutput("product")
+)
+
+server <- function(input, output) {
+  x <- reactive(input$x)
+  y <- reactive(input$y)
+  output$product <- renderText({
+    x() * y()
+  })
+}
+
+shinyApp(ui, server)
+```
+
+```{r Exercises2a, eval=F}
+ui <- fluidPage(
+  textInput("test", "", placeholder = "Your name"),
+  sliderInput("sliderTest", "When should we deliver?", min = as.Date("2020-09-16"),
+              max = as.Date("2020-09-23"), value = as.Date("2020-09-17")),
+  sliderInput("sliderTest2", "", min = 0, max = 100, value = 50),
+  actionButton("play", "Play")
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+```{r Exercises3a, eval=F}
+ui <- fluidPage(
+  textInput("name", "What's your name?"),
+  textOutput("greeting")
+)
+
+server <- function(input, output, session) {
+  greeting <- reactive(paste0("Hello ", input$name))
+  output$greeting <- renderText(greeting())
+}
+
+shinyApp(ui, server)
+```
+
+```{r Exercises3b, eval=F}
+freqpoly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
+  df <- data.frame(
+    x = c(x1, x2),
+    g = c(rep("x1", length(x1)), rep("x2", length(x2)))
+  )
+
+  ggplot(df, aes(x, colour = g)) +
+    geom_freqpoly(binwidth = binwidth, size = 1) +
+    coord_cartesian(xlim = xlim)
+}
+
+t_test <- function(x1, x2) {
+  test <- t.test(x1, x2)
+
+  # use sprintf() to format t.test() results compactly
+  sprintf(
+    "p value: %0.3f\n[%0.2f, %0.2f]",
+    test$p.value, test$conf.int[1], test$conf.int[2]
+  )
+}
+
+ui <- fillPage(
+  fluidRow(
+    column(4,
+      "Distribution 1",
+      numericInput("n1", label = "n", value = 1000, min = 1),
+      numericInput("mean1", label = "µ", value = 0, step = 0.1),
+      numericInput("sd1", label = "σ", value = 0.5, min = 0.1, step = 0.1)
+    ),
+    column(4,
+      "Distribution 2",
+      numericInput("n2", label = "n", value = 1000, min = 1),
+      numericInput("mean2", label = "µ", value = 0, step = 0.1),
+      numericInput("sd2", label = "σ", value = 0.5, min = 0.1, step = 0.1)
+    ),
+    column(4,
+      "Frequency polygon",
+      numericInput("binwidth", label = "Bin width", value = 0.1, step = 0.1),
+      sliderInput("range", label = "range", value = c(-3, 3), min = -5, max = 5)
+    )
+  ),
+  fluidRow(
+    column(9, plotOutput("hist")),
+    column(3, verbatimTextOutput("ttest"))
+  )
+)
+
+server <- function(input, output, session) {
+  output$hist <- renderPlot({
+    x1 <- rnorm(input$n1, input$mean1, input$sd1)
+    x2 <- rnorm(input$n2, input$mean2, input$sd2)
+
+    freqpoly(x1, x2, binwidth = input$binwidth, xlim = input$range)
+  }, res = 96)
+
+  output$ttest <- renderText({
+    x1 <- rnorm(input$n1, input$mean1, input$sd1)
+    x2 <- rnorm(input$n2, input$mean2, input$sd2)
+
+    t_test(x1, x2)
+  })
+}
+
+shinyApp(ui, server)
+```
+
+```{r Exercises3c, eval=F}
+library(shiny)
+library(ggplot2)
+
+freqpoly <- function(x1, x2, binwidth = 0.1, xlim = c(-3, 3)) {
+  df <- data.frame(
+    x = c(x1, x2),
+    g = c(rep("x1", length(x1)), rep("x2", length(x2)))
+  )
+
+  ggplot(df, aes(x, colour = g)) +
+    geom_freqpoly(binwidth = binwidth, size = 1) +
+    coord_cartesian(xlim = xlim)
+}
+
+t_test <- function(x1, x2) {
+  test <- t.test(x1, x2)
+
+  # use sprintf() to format t.test() results compactly
+  sprintf(
+    "p value: %0.3f\n[%0.2f, %0.2f]",
+    test$p.value, test$conf.int[1], test$conf.int[2]
+  )
+}
+
+ui <- fluidPage(
+  fluidRow(
+    column(3,
+      numericInput("lambda1", label = "lambda1", value = 3),
+      numericInput("lambda2", label = "lambda2", value = 5),
+      numericInput("n", label = "n", value = 1e4, min = 0)
+    ),
+    column(9, plotOutput("hist"))
+  )
+)
+
+server <- function(input, output, session) {
+  x1 <- reactive(rpois(input$n, input$lambda1))
+  x2 <- reactive(rpois(input$n, input$lambda2))
+  output$hist <- renderPlot({
+    freqpoly(x1(), x2(), binwidth = 1, xlim = c(0, 40))
+  }, res = 96)
+}
+
+shinyApp(ui, server)
+```
+
+Injuries Analysis:
+
+```{r Exercises 4, include = F}
+# Creating neiss folder and downloading files
+dir.create("neiss")
+download <- function(name) {
+  url <- "https://raw.github.com/hadley/mastering-shiny/main/neiss/"
+  download.file(paste0(url, name), paste0("neiss/", name), quiet = TRUE)
+}
+download("injuries.tsv.gz")
+download("population.tsv")
+download("products.tsv")
+```
+
+Reading in files
+
+```{r include = F}
+injuries <- vroom::vroom("~/ML_101/neiss/injuries.tsv.gz")
+products <- vroom::vroom("~/ML_101/neiss/products.tsv")
+population <- vroom::vroom("~/ML_101/neiss/population.tsv")
+```
+
+Exploration:
+
+```{r include = F}
+selected <- injuries %>% filter(prod_code == 649)
+selected %>% count(location, wt = weight, sort = TRUE)
+selected %>% count(body_part, wt = weight, sort = TRUE)
+selected %>% count(diag, wt = weight, sort = TRUE)
+```
+
+```{r include = F}
+summary <- selected %>%
+  count(age, sex, wt = weight)
+
+summary %>%
+  ggplot(aes(age, n, colour = sex)) +
+  geom_line() +
+  labs(y = "Estimated number of injuries")
+
+```
+
+```{r Exercises 4b}
+prods <- products$prod_code
+
+ui <- fluidPage(
+  fluidRow(
+    column(
+      6, selectInput("choice", "Product", choices = prods) 
+    )
+  ),
+  fluidRow(
+    column(
+      4, tableOutput("summary")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  selected <- reactive(injuries %>% filter(prod_code == input$choice))
+  # selected <- reactive(injuries %>% 
+  #   merge(products, by = "prod_code") %>%
+  #   filter(title == input$choice))  
+  # summ <- reactive(selected() %>% count(diag, wt = weight, sort = TRUE))
+  # summ <- reactive(selected() %>%
+  #   group_by(location) %>%
+  #   summarise(Count = n()))
+  
+  output$summary <- renderTable({
+    selected()
+  })
+}
+
+shinyApp(ui, server)
+```
+
