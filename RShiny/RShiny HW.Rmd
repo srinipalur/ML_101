@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r include = F}
+rm(list=ls())
 library("shiny")
 library("vroom")
 library("tidyverse")
@@ -258,37 +259,53 @@ summary %>%
   geom_line() +
   labs(y = "Estimated number of injuries")
 
+prods <- products$title
+injuries <- injuries %>% 
+  merge(products, by = "prod_code")
 ```
 
-```{r Exercises 4b}
-prods <- products$prod_code
-
+```{r Exercises 4b, fig.height = 60}
 ui <- fluidPage(
   fluidRow(
-    column(
-      6, selectInput("choice", "Product", choices = prods) 
+    column(6, selectInput("choice", "Product", choices = prods), 
     )
   ),
   fluidRow(
-    column(
-      4, tableOutput("summary")
-    )
+    column(4, tableOutput("diag_summary")),
+    column(4, tableOutput("bodypart_summary")),
+    column(4, tableOutput("location_summary")),
+    style = "height:200px"
+    ),
+  fluidRow(
+    column(10, plotOutput("age_sex"))
   )
-)
+  )
 
 server <- function(input, output, session) {
-  selected <- reactive(injuries %>% filter(prod_code == input$choice))
-  # selected <- reactive(injuries %>% 
-  #   merge(products, by = "prod_code") %>%
-  #   filter(title == input$choice))  
-  # summ <- reactive(selected() %>% count(diag, wt = weight, sort = TRUE))
-  # summ <- reactive(selected() %>%
-  #   group_by(location) %>%
-  #   summarise(Count = n()))
+  selected <- reactive(injuries %>% filter(title == input$choice))
   
-  output$summary <- renderTable({
-    selected()
-  })
+  output$diag_summary <- renderTable(
+    selected() %>% count(diag, wt = weight, sort = T)
+  )
+  
+  output$bodypart_summary <- renderTable(
+    selected() %>% count(body_part, wt = weight, sort = T)
+  )
+  
+  output$location_summary <- renderTable(
+    selected() %>% count(location, wt = weight, sort = T)
+  )
+    
+  injurySummary <- reactive({
+    selected() %>%
+    group_by(age, sex) %>%
+    summarize(Count = n())})
+  
+  # output$age_sex <- renderTable(injurySummary())
+  output$age_sex <- renderPlot({
+    print(ggplot(injurySummary(), aes(age, Count, group = sex, color = sex)) +
+             geom_line())
+  }, res = 96)
 }
 
 shinyApp(ui, server)
